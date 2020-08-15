@@ -175,8 +175,8 @@ VNA_SHELL_FUNCTION(cmd_levelchange)
 VNA_SHELL_FUNCTION(cmd_leveloffset)
 {
   if (argc == 0) {
-    shell_printf("leveloffset low %.1f\r\n", (float) config.low_level_offset);
-    shell_printf("leveloffset high %.1f\r\n", (float)config.high_level_offset);
+    shell_printf("leveloffset low %.1f\r\n", config.low_level_offset);
+    shell_printf("leveloffset high %.1f\r\n", config.high_level_offset);
     return;
   } else if (argc == 2) {
     float v = my_atof(argv[1]);
@@ -374,6 +374,23 @@ VNA_SHELL_FUNCTION(cmd_d)
   dirty = true;
 }
 
+#if 0
+extern int16_t adc_buf_read(uint16_t *result, uint32_t count);
+
+VNA_SHELL_FUNCTION(cmd_g)
+{
+  (void) argc;
+  (void) argv;
+  int32_t a = my_atoi(argv[0]);
+  systime_t start_of_read = chVTGetSystemTimeX();
+  adc_buf_read(spi_buffer, 256);
+  systime_t time_of_read = chVTGetSystemTimeX() - start_of_read;
+  shell_printf("Time: %d\r\n", time_of_read);
+  for (int i=0;i<20;i++)
+    shell_printf("[%d] = %d\r\n", (int)i, (int)(spi_buffer[i]));
+}
+#endif
+
 
 VNA_SHELL_FUNCTION(cmd_a)
 {
@@ -570,6 +587,8 @@ VNA_SHELL_FUNCTION(cmd_scanraw)
     old_points = points;
   }
   operation_requested = false;
+  dirty = true;
+
   for (uint32_t i = 0; i<points; i++) {
     int val = perform(false, i, start +(uint32_t)(f_step * i), false) + float_TO_PURE_RSSI(EXT_ZERO_LEVEL);
     if (operation_requested) // break on operation in perform
